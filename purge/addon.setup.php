@@ -7,7 +7,7 @@ return array(
     'author_url'     => 'https://kevincupp.com/',
     'name'           => 'Purge',
     'description'    => '',
-    'version'        => '2.0',
+    'version'        => '2.1.0',
     'namespace'      => 'KevinCupp\Addons\Purge',
     'settings_exist' => true,
     'models'         => [

@@ -10,7 +10,11 @@ Add the `purge` folder inside your `system/user/addons` directory, and then inst
 
 Purge assumes your Varnish cache is accessible at your ExpressionEngine installation's `site_url` configuration item and at the current port you are accessing the control panel from. If you want to use a custom port, just specify it in your config.php:
 
-	$config['varnish_port'] = 8080;
+    $config['varnish_port'] = 8080;
+
+If you want to use a custom server url, just specify it in your config.php:
+
+	$config['varnish_site_url'] = array('site1.com', 'site2.com');
 
 Purge will send a `PURGE` request to Varnish. To get Varnish reacting to this request, add this to your VCL file in `vcl_recv`:
 
@@ -27,8 +31,11 @@ But, note that if you have any of these channel rules set up, only those rules w
 
 ## Changelog
 
+* **2.1.0 - November 1, 2019**
+    * Added support for multiple varnish servers
+    * Readded ``varnish_site_url`` config override
 * **2.0 - August 10, 2017**
-	* EE3 release! EE2 version available in `2.x` branch.
+    * EE3 release! EE2 version available in `2.x` branch.
 * **1.1.1 - March 13, 2015**
 	* Added support for MSM for URLs patterns in Purge Addon Admin settings. Can specify manual URLs in accessory.
 * **1.1 - February 13, 2015**
