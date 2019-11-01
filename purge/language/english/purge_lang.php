@@ -13,7 +13,7 @@ $lang = [
     'add_rule'                 =>'Add New Rule',
     'rules_saved'              =>'Channel rules saved',
     'purge_cache'              =>'Purge the cache',
-    'purge_cache_desc'         =>'Sends a <code>PURGE</code> request to Varnish at port <b>%s</b> at the current site URL: <b>%s</b>',
+    'purge_cache_desc'         =>'Sends a <code>PURGE</code> request to Varnish at port <b>%s</b> at this location: <b>%s</b>',
     'purging'                  =>'Purging...'
 
 ];

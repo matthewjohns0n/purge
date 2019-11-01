@@ -54,6 +54,55 @@ class Varnish
 
         return (int) $port;
     }
+
+    /**
+     * Gets the site url of the Varnish server
+     * Defaults to site_url if there is no config set
+     *
+     * @return array Varnish site urls
+     */
+    public function getSiteUrls()
+    {
+        if (! $site_urls = ee()->config->item('varnish_site_url')) {
+            $site_urls = ee()->config->item('site_url');
+        }
+
+        // If we get a string for our site url, we kow it is just one
+        if (! is_array($site_urls)) {
+            $site_urls = array($site_urls);
+        }
+
+        foreach ($site_urls as &$site_url) {
+            $site_url = rtrim($site_url, '/') . '/';
+        }
+
+        return $site_urls;
+    }
+
+    public function purgeEntryWithRule($entry, $rule)
+    {
+        $responses = array();
+        $site_urls = ee('purge:Varnish')->getSiteUrls();
+        foreach ($site_urls as $site_url) {
+            $purge_url = $site_url . ltrim($rule->pattern, '/');
+            $purge_url = str_replace('{url_title}', $entry->url_title, $purge_url);
+
+            $responses[$purge_url] = ee('purge:Varnish')->purge($purge_url);
+        }
+        return $responses;
+    }
+
+    public function purgeCustomPath($path)
+    {
+        $responses = array();
+        $site_urls = ee('purge:Varnish')->getSiteUrls();
+        foreach ($site_urls as $site_url) {
+            $purge_url = $site_url . $path;
+
+            $responses[$purge_url] = ee('purge:Varnish')->purge($purge_url);
+        }
+        return $responses;
+    }
 }
 
 // EOF

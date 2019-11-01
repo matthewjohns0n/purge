@@ -24,15 +24,15 @@ class Purge_mcp
         $base_url = ee('CP/URL')->make('addons/settings/purge');
 
         if (ee('Request')->method() == 'POST') {
-            $purge_url = rtrim(ee()->config->item('site_url'), '/');
-
+            $custom_path = '';
             if (ee('Request')->post('purge_scope') == 'custom') {
-                $purge_url = $purge_url . '/' . ltrim(ee('Request')->post('custom_path'), '/');
+                $custom_path = ltrim(ee('Request')->post('custom_path'), '/');
             }
 
-            $response = ee('purge:Varnish')->purge($purge_url);
+            $responses = ee('purge:Varnish')->purgeCustomPath($custom_path);
 
-            ee('CP/Alert')->makeInline('shared-form')
+            foreach ($responses as $purge_url => $response) {
+                ee('CP/Alert')->makeInline('shared-form')
                 ->asSuccess()
                 ->withTitle(lang('purge_request_sent'))
                 ->addToBody(sprintf(
@@ -41,11 +41,13 @@ class Purge_mcp
                     $response
                 ))
                 ->defer();
+            }
 
             ee()->functions->redirect($base_url);
         }
 
         $port = ee('purge:Varnish')->getPort();
+        $sites = implode(', ', ee('purge:Varnish')->getSiteUrls());
 
         $vars = [
             'cp_page_title' => 'Purge',
@@ -56,7 +58,7 @@ class Purge_mcp
                 [
                     [
                         'title' => 'purge_cache',
-                        'desc' => sprintf(lang('purge_cache_desc'), $port, ee()->config->item('site_url')),
+                        'desc' => sprintf(lang('purge_cache_desc'), $port, $sites),
                         'fields' => [
                             'purge_scope' => [
                                 'type' => 'radio',

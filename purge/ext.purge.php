@@ -52,11 +52,7 @@ class Purge_ext
         }
 
         foreach ($rules as $rule) {
-            $site_url = rtrim(ee()->config->item('site_url'), '/') . '/';
-            $purge_url = $site_url . ltrim($rule->pattern, '/');
-            $purge_url = str_replace('{url_title}', $entry->url_title, $purge_url);
-
-            ee('purge:Varnish')->purge($purge_url);
+            ee('purge:Varnish')->purgeEntryWithRule($entry, $rule);
         }
     }
 
