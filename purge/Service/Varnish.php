@@ -14,9 +14,14 @@ class Varnish
      * @param string $purge_url Full URL to send the Purge request to
      * @return string Response text from request
      */
-    public function purge($purge_url)
+    public function purge($purge_url=null)
     {
         $ch = curl_init();
+
+        // If the purge_url is not set, lets default to the site
+        if (! $purge_url) {
+            $purge_url = ee()->config->item('base_url');
+        }
 
         curl_setopt($ch, CURLOPT_URL, $purge_url);
         curl_setopt($ch, CURLOPT_PORT, $this->getPort());
