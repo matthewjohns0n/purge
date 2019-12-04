@@ -16,12 +16,12 @@ class Varnish
      */
     public function purge($purge_url=null)
     {
-        $ch = curl_init();
-
         // If the purge_url is not set, lets default to the site
-        if (! $purge_url) {
-            $purge_url = ee()->config->item('base_url');
+        if (empty($purge_url)) {
+            return ee('purge:Varnish')->purgeAll();
         }
+
+        $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $purge_url);
         curl_setopt($ch, CURLOPT_PORT, $this->getPort());
@@ -45,6 +45,22 @@ class Varnish
         return isset($parsed[1]) ? $parsed[1] : 'Unexpected response: '. $resp;
     }
 
+    public function purgeAll($purge_urls = null)
+    {
+        // If we are not passed an array of purge urls, we get the default urls
+        if (empty($purge_urls)) {
+            $purge_urls = ee('purge:Varnish')->getSiteUrls();
+        }
+
+        $responses = array();
+
+        foreach ($purge_urls as $purge_url) {
+            $responses[$purge_url] = ee('purge:Varnish')->purge($purge_url);
+        }
+
+        return $responses;
+    }
+
     /**
      * Gets the port on which Varnish is listening; if it's not specified in the
      * config, we'll try to infer it
@@ -61,12 +77,12 @@ class Varnish
     }
 
     /**
-     * Gets the site url of the Varnish server
+     * Gets the site urls of the Varnish server
      * Defaults to site_url if there is no config set
      *
      * @return array Varnish site urls
      */
-    public function getSiteUrls()
+    public function getSiteUrls($path=null)
     {
         if (! $site_urls = ee()->config->item('varnish_site_url')) {
             $site_urls = ee()->config->item('site_url');
@@ -77,36 +93,34 @@ class Varnish
             $site_urls = array($site_urls);
         }
 
+        // Format each url properly
         foreach ($site_urls as &$site_url) {
             $site_url = rtrim($site_url, '/') . '/';
+
+            // Add the path to the urls if it is set
+            if (!empty($path)) {
+                $site_url = . ltrim($path, '/');
+            }
         }
+
+        // Remove any empty elements from array
+        $site_urls = array_filter($site_urls);
 
         return $site_urls;
     }
 
     public function purgeEntryWithRule($entry, $rule)
     {
-        $responses = array();
-        $site_urls = ee('purge:Varnish')->getSiteUrls();
-        foreach ($site_urls as $site_url) {
-            $purge_url = $site_url . ltrim($rule->pattern, '/');
-            $purge_url = str_replace('{url_title}', $entry->url_title, $purge_url);
+        $path = str_replace('{url_title}', $entry->url_title, $rule->pattern);
+        $site_urls = ee('purge:Varnish')->getSiteUrls($path);
 
-            $responses[$purge_url] = ee('purge:Varnish')->purge($purge_url);
-        }
-        return $responses;
+        return $this->purgeAll($site_urls);
     }
 
     public function purgeCustomPath($path)
     {
-        $responses = array();
-        $site_urls = ee('purge:Varnish')->getSiteUrls();
-        foreach ($site_urls as $site_url) {
-            $purge_url = $site_url . $path;
-
-            $responses[$purge_url] = ee('purge:Varnish')->purge($purge_url);
-        }
-        return $responses;
+        $site_urls = ee('purge:Varnish')->getSiteUrls($path);
+        return $this->purgeAll($site_urls);
     }
 }
 
