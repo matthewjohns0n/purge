@@ -19,15 +19,10 @@ class Purge_ext
         );
 
         foreach ($hooks as $hook => $method) {
-            ee('Model')->make('Extension', [
-                'class'    => __CLASS__,
-                'method'   => $method,
-                'hook'     => $hook,
-                'settings' => [],
-                'version'  => $this->version,
-                'enabled'  => 'y'
-            ])->save();
+            $this->registerExtension($method, $hook);
         }
+
+        return true;
     }
 
     /**
@@ -67,6 +62,39 @@ class Purge_ext
         );
     }
 
+    public function registerExtension($method, $hook = null, $priority = 10, $enabled = 'y')
+    {
+        // if hook is empty, it should really just be the same thing as $method
+        if (!$hook) {
+            $hook = $method;
+        }
+
+        if (!isset($this->settings) || !is_array($this->settings)) {
+            $this->settings = array();
+        }
+
+        // We are searching the database for this extension, and determining if it already exists
+        $already_exists = (bool) ee()->db->get_where('extensions', array(
+            'class'  => __CLASS__,
+            'method' => $method,
+            'hook'   => $hook))->num_rows;
+
+        // if it already exists, lets not add another.
+        if ($already_exists) {
+            return true;
+        }
+
+        return ee('Model')->make('Extension', [
+            'class'    => __CLASS__,
+            'method'   => $method,
+            'hook'     => $hook,
+            'settings' => serialize($this->settings),
+            'priority' => $priority,
+            'version'  => $this->version,
+            'enabled'  => $enabled,
+        ])->save();
+    }
+
     /**
      * Disable extension
      */
@@ -85,6 +113,12 @@ class Purge_ext
         if ($current == '' or $current == $this->version) {
             return false;
         }
+
+        // This will register all the hooks, but skip over the ones that are already there
+        // This is because the hooks weren't properly registering on upgrade
+        $this->activate_extension();
+
+        return true;
     }
 }
 
