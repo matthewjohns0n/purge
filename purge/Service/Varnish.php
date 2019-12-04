@@ -99,7 +99,7 @@ class Varnish
 
             // Add the path to the urls if it is set
             if (!empty($path)) {
-                $site_url = . ltrim($path, '/');
+                $site_url .= ltrim($path, '/');
             }
         }
 
